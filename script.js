@@ -84,11 +84,6 @@ function ${doc.name}(${doc.params})`;
         }
     });
 
-    noSubcat.forEach(doc => {
-        const id = `${groupId}-${doc.name}`;
-        content.appendChild(createFunctionBlock(doc, id));
-    });
-
     Object.keys(groupedSub).forEach(sub => {
         const subHeader = document.createElement('h3');
         subHeader.textContent = sub;

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Jedi vs. Sith | Dokumentation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="img/transparent_logo.png" type="image/x-icon">
+</head>
+<body>
+    <nav>
+        <img src="img/transparent_logo.png" alt="Jedi vs. Sith Logo" style="width: 100px; position:relative; left:50%; transform: translateX(-50%);margin-bottom: .1vh;">
+        <h2>Jedi vs. Sith</h2>
+        <h3>Dokumentation</h3>
+        <ul id="nav-list"></ul>
+    </nav>
+
+    <main>
+        <div class="header-container">
+            <div>
+                <h1>Dokumentation</h1>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-type="all">Alle</button>
+                    <button class="filter-btn" data-type="client">Client</button>
+                    <button class="filter-btn" data-type="shared">Shared</button>
+                    <button class="filter-btn" data-type="server">Server</button>
+                </div>
+            </div>
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Suche Funktion...">
+                <i class="bx bx-search"></i>
+            </div>
+        </div>
+        <div id="content"></div>
+    </main>
+</body>
+    <script src="config/docs.js"></script>
+    <script src="script.js"></script>
+</html>

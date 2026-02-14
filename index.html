@@ -1,35 +1,414 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
-
 <head>
-    <meta charset="UTF-8">
-    <title>Jedi vs. Sith | Dokumentation</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <link rel="shortcut icon" href="img/transparent_logo.png" type="image/x-icon">
-</head>
-<body>
-    <nav>
-        <img src="img/transparent_logo.png" alt="Jedi vs. Sith Logo" style="width: 100px; position:relative; left:50%; transform: translateX(-50%);margin-bottom: .1vh;">
-        <h2>Jedi vs. Sith</h2>
-        <h3>Dokumentation</h3>
-        <ul id="nav-list"></ul>
-    </nav>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trinity Docs</title>
 
-    <main>
-        <div class="header-container">
-            <div>
-                <h1>Jedi vs. Sith | Dokumentation</h1>
+<!-- NUR DIE FONT IST NEU -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#070e1a;
+  --panel:#0a1426;
+  --panel2:#0b1a31;
+  --border:rgba(255,255,255,.08);
+  --text:rgba(255,255,255,.88);
+  --muted:rgba(255,255,255,.55);
+  --accent:#3aa0ff;
+  --accent2:#2d6bff;
+  --radius:16px;
+
+  /* HIER nur Font angepasst */
+  --sans:'Inter', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+
+body{
+  margin:0;
+  font-family:var(--sans);
+  color:var(--text);
+  background:
+    radial-gradient(900px 600px at 12% 10%, rgba(58,160,255,.16), transparent 60%),
+    radial-gradient(900px 600px at 88% 80%, rgba(45,107,255,.12), transparent 60%),
+    linear-gradient(180deg, var(--bg), #050a13 70%, #04070e);
+}
+
+.app{
+  height:100%;
+  display:grid;
+  grid-template-columns: 320px 1fr;
+  gap:16px;
+  padding:16px;
+  max-width:1400px;
+  margin:0 auto;
+}
+
+.card{
+  background:linear-gradient(180deg, rgba(11,26,49,.9), rgba(10,20,38,.9));
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+
+.sidebar{
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+
+.brand{
+  padding:16px;
+  border-bottom:1px solid var(--border);
+  font-weight:600;
+}
+
+.sidebar-controls{
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+}
+
+.input{
+  width:100%;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:rgba(0,0,0,.18);
+  color:var(--text);
+  outline:none;
+  font-size:13px;
+}
+
+.nav{
+  padding:10px;
+  overflow:auto;
+}
+
+.nav-item{
+  margin:4px 0;
+  padding:10px 12px;
+  border-radius:12px;
+  cursor:pointer;
+  font-size:13px;
+  transition:.15s;
+}
+
+.nav-item:hover{
+  background:rgba(58,160,255,.08);
+}
+
+.nav-item.active{
+  background:rgba(58,160,255,.15);
+}
+
+.content{
+  display:flex;
+  flex-direction:column;
+}
+
+.topbar{
+  padding:16px;
+  border-bottom:1px solid var(--border);
+  font-weight:600;
+}
+
+.list{
+  padding:16px;
+  overflow:auto;
+}
+
+.row{
+  padding:16px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(0,0,0,.14);
+  margin-bottom:12px;
+}
+
+.fn{
+  font-family:var(--mono);
+  font-size:13px;
+  margin-bottom:6px;
+}
+
+.meta{
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+
+.tag{
+  font-size:11px;
+  padding:4px 8px;
+  border-radius:999px;
+  background:rgba(58,160,255,.15);
+  color:var(--accent);
+  margin-left:6px;
+}
+
+.desc{
+  font-size:13px;
+  line-height:1.5;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+  <aside class="card sidebar">
+    <div class="brand">Trinity Docs</div>
+
+    <div class="sidebar-controls">
+      <input id="searchInput" class="input" placeholder="Suchen...">
+    </div>
+
+    <nav id="nav" class="nav"></nav>
+  </aside>
+
+  <main class="card content">
+    <header class="topbar" id="pageTitle">Übersicht</header>
+    <section id="list" class="list"></section>
+  </main>
+</div>
+
+<script src="docs.config.js"></script>
+<script>
+const docs = window.TRINITY_DOCS || [];
+const nav = document.getElementById("nav");
+const list = document.getElementById("list");
+const searchInput = document.getElementById("searchInput");
+const pageTitle = document.getElementById("pageTitle");
+
+let activeModule = null;
+
+function renderNav(){
+  const groups = {};
+  const collapsed = renderNav.collapsed || {};
+  renderNav.collapsed = collapsed;
+
+  for (const d of docs){
+    const parts = (d.modul || "Other").split("›").map(s => s.trim()).filter(Boolean);
+    const root = parts[0] || "Other";
+    const child = parts[1] || "(Allgemein)";
+
+    groups[root] = groups[root] || {};
+    groups[root][child] = true;
+  }
+
+  nav.innerHTML = "";
+
+  /* ===== STARTSEITE BUTTON ===== */
+  const startBtn = document.createElement("div");
+  startBtn.className = "nav-item" + (!activeModule ? " active" : "");
+  startBtn.textContent = "Startseite";
+  startBtn.style.marginBottom = "10px";
+  startBtn.style.fontWeight = "600";
+  startBtn.onclick = ()=>{
+    activeModule = null;
+    render();
+  };
+  nav.appendChild(startBtn);
+  /* ============================== */
+
+  Object.keys(groups).sort().forEach(root=>{
+    const header = document.createElement("div");
+    header.style.display = "flex";
+    header.style.justifyContent = "space-between";
+    header.style.alignItems = "center";
+    header.style.margin = "8px 0 6px";
+    header.style.padding = "8px 10px";
+    header.style.borderRadius = "12px";
+    header.style.border = "1px solid rgba(255,255,255,.06)";
+    header.style.background = "rgba(0,0,0,.14)";
+    header.style.cursor = "pointer";
+    header.style.fontSize = "12px";
+    header.style.fontWeight = "600";
+    header.style.color = "var(--muted)";
+    header.innerHTML = `<span>${root}</span><span>${collapsed[root] ? "▸" : "▾"}</span>`;
+
+    header.onclick = ()=>{
+      collapsed[root] = !collapsed[root];
+      render();
+    };
+
+    nav.appendChild(header);
+
+    if(!collapsed[root]){
+      Object.keys(groups[root]).sort().forEach(child=>{
+        const moduleKey = `${root} › ${child}`;
+        const item = document.createElement("div");
+        item.className = "nav-item" + (moduleKey === activeModule ? " active" : "");
+        item.textContent = child;
+        item.style.marginLeft = "10px";
+        item.onclick = ()=>{
+          activeModule = moduleKey;
+          render();
+        };
+        nav.appendChild(item);
+      });
+    }
+  });
+}
+
+function renderStartPage(){
+  const moduleSet = new Set(docs.map(d => d.modul));
+  const rootSet = new Set(docs.map(d => (d.modul || "").split("›")[0].trim()).filter(Boolean));
+  const sharedCount = docs.filter(d => (d.type || "").toLowerCase() === "shared").length;
+  const serverCount = docs.filter(d => (d.type || "").toLowerCase() === "server").length;
+
+  const topModules = [...moduleSet]
+    .map(mod => ({ mod, count: docs.filter(d => d.modul === mod).length }))
+    .sort((a,b)=>b.count-a.count)
+    .slice(0, 6);
+
+  const latest = docs.slice(-6).reverse();
+
+  pageTitle.textContent = "Startseite";
+
+  list.innerHTML = `
+    <div style="padding:6px 2px 16px;">
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:stretch;">
+        <div style="flex:1;min-width:260px;padding:18px;border-radius:14px;border:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.14);">
+          <div style="font-size:18px;font-weight:600;margin:0 0 6px;">Trinity Gamemode Dokumentation</div>
+          <div style="color:var(--muted);font-size:13px;line-height:1.5;">
+            Links findest du alle Funktionen pro Modul. Nutze die Suche um schnell API-Namen oder Keywords zu finden.
+          </div>
+          <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+            <div style="padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.12);min-width:140px;">
+              <div style="font-size:20px;font-weight:600;">${rootSet.size}</div>
+              <div style="color:var(--muted);font-size:12px;">Kategorien</div>
             </div>
-            <div class="search-container">
-                <input type="text" id="search-input" placeholder="Suche Funktion...">
-                <i class="bx bx-search"></i>
+            <div style="padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.12);min-width:140px;">
+              <div style="font-size:20px;font-weight:600;">${moduleSet.size}</div>
+              <div style="color:var(--muted);font-size:12px;">Module</div>
             </div>
+            <div style="padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.12);min-width:140px;">
+              <div style="font-size:20px;font-weight:600;">${docs.length}</div>
+              <div style="color:var(--muted);font-size:12px;">Einträge</div>
+            </div>
+          </div>
         </div>
-        <div id="content"></div>
-    </main>
+
+        <div style="width:340px;max-width:100%;padding:18px;border-radius:14px;border:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.14);">
+          <div style="font-size:14px;font-weight:600;margin:0 0 10px;">Schnellfilter</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:150px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.12);">
+              <div style="font-size:16px;font-weight:600;">${sharedCount}</div>
+              <div style="color:var(--muted);font-size:12px;">Shared</div>
+            </div>
+            <div style="flex:1;min-width:150px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.12);">
+              <div style="font-size:16px;font-weight:600;">${serverCount}</div>
+              <div style="color:var(--muted);font-size:12px;">Server</div>
+            </div>
+          </div>
+          <div style="margin-top:14px;color:var(--muted);font-size:12px;line-height:1.5;">
+            Tipp: Klick links auf <b>Core</b> oder <b>Modules</b> um die Bereiche auf/zu zu klappen.
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns: 1fr 1fr;gap:14px;margin-top:14px;">
+        <div style="padding:18px;border-radius:14px;border:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.14);">
+          <div style="font-size:14px;font-weight:600;margin:0 0 10px;">Beliebte Module</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            ${topModules.map(x=>`
+              <button data-open="${escapeAttr(x.mod)}" style="text-align:left;border:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.12);color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer;">
+                <div style="font-size:13px;font-weight:600;">${escapeHtml(x.mod)}</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:2px;">${x.count} Einträge</div>
+              </button>
+            `).join("")}
+          </div>
+        </div>
+
+        <div style="padding:18px;border-radius:14px;border:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.14);">
+          <div style="font-size:14px;font-weight:600;margin:0 0 10px;">Zuletzt hinzugefügt</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            ${latest.map(d=>`
+              <div style="border:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.12);padding:10px 12px;border-radius:12px;">
+                <div style="font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.90);">${escapeHtml(d.name)}(${escapeHtml(d.params||"")})</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:4px;">${escapeHtml(d.modul)} • ${escapeHtml(d.type||"")}</div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Quick open buttons
+  list.querySelectorAll("[data-open]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      activeModule = btn.getAttribute("data-open");
+      render();
+    });
+  });
+}
+
+function renderList(){
+  const search = (searchInput.value || "").toLowerCase();
+
+  if (!activeModule){
+    renderStartPage();
+    return;
+  }
+
+  list.innerHTML = "";
+
+  const filtered = docs
+    .filter(d => d.modul === activeModule)
+    .filter(d =>
+      (d.name || "").toLowerCase().includes(search) ||
+      (d.beschreibung || "").toLowerCase().includes(search)
+    );
+
+  pageTitle.textContent = activeModule;
+
+  filtered.forEach(d=>{
+    const div = document.createElement("div");
+    div.className = "row";
+    div.innerHTML = `
+      <div class="fn">${escapeHtml(d.name)}(${escapeHtml(d.params||"")})</div>
+      <div class="meta">${escapeHtml(d.modul)} <span class="tag">${escapeHtml(d.type||"")}</span></div>
+      <div class="desc">${escapeHtml(d.beschreibung||"")}</div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function render(){
+  renderNav();
+  renderList();
+}
+
+searchInput.addEventListener("input",render);
+render();
+
+function escapeHtml(v){
+  return (v ?? "").toString()
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function escapeAttr(v){
+  return escapeHtml(v).replaceAll("`","&#096;");
+}
+/* ========================================== */
+
+
+searchInput.addEventListener("input", render);
+render();
+
+</script>
+</script>
+
+
 </body>
-    <script src="config/docs.js"></script>
-    <script src="script.js"></script>
 </html>
